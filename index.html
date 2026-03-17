@@ -126,8 +126,37 @@ function result() {
   let log = document.getElementById("log");
 
   if (reels[0] === reels[1] && reels[1] === reels[2]) {
-    jackpot();
+    if (reels[0] === "7️⃣") {
+      superJackpot();
+    } else {
+      jackpot();
+    }
   } else {
+    log.innerHTML = "😢 ハズレ...";
+  }
+}
+
+function superJackpot() {
+  let log = document.getElementById("log");
+  document.getElementById("winSound").play();
+
+  let count = 0;
+  let colors = ["red","yellow","cyan","lime","magenta","white"];
+
+  let interval = setInterval(() => {
+    document.body.style.background = colors[count % colors.length];
+    document.getElementById("reels").style.transform = `scale(${1 + Math.sin(count)*0.3})`;
+    count++;
+
+    if (count > 40) {
+      clearInterval(interval);
+      document.body.style.background = "black";
+      document.getElementById("reels").style.transform = "scale(1)";
+    }
+  }, 80);
+
+  log.innerHTML = "💥💥💥 777 SUPER JACKPOT!!! 脳汁限界突破!!! 💥💥💥";
+} else {
     log.innerHTML = "😢 ハズレ...";
   }
 }
@@ -155,3 +184,4 @@ updateDisplay();
 
 </body>
 </html>
+
