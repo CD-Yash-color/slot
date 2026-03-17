@@ -2,111 +2,155 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>脳汁スロット</title>
+<title>脳汁スロット（目押し版）</title>
 <style>
 body {
   background: black;
   color: white;
   text-align: center;
   font-family: Arial, sans-serif;
+  transition: background 0.2s;
 }
 
 h1 {
   color: gold;
-  text-shadow: 0 0 10px red;
+  text-shadow: 0 0 15px red;
 }
 
 #reels {
-  font-size: 60px;
-  margin: 20px;
-  letter-spacing: 20px;
+  font-size: 70px;
+  margin: 30px;
+  letter-spacing: 25px;
 }
 
 button {
-  font-size: 20px;
-  padding: 10px 20px;
+  font-size: 18px;
+  padding: 10px 15px;
+  margin: 5px;
   background: red;
   color: white;
   border: none;
-  cursor: pointer;
   border-radius: 10px;
+  cursor: pointer;
 }
 
-button:hover {
-  background: orange;
-}
+button:hover { background: orange; }
 
 .flash {
-  animation: flash 0.2s infinite;
+  animation: flash 0.15s infinite;
 }
 
 @keyframes flash {
   0% { background: black; }
-  50% { background: red; }
+  50% { background: purple; }
   100% { background: black; }
 }
 
-#log {
-  margin-top: 20px;
-  font-size: 18px;
-}
+#log { margin-top: 20px; font-size: 20px; }
 </style>
 </head>
 <body>
 
-<h1>🔥 脳汁スロット 🔥</h1>
+<h1>🔥 目押し脳汁スロット 🔥</h1>
 <div id="reels">❓ ❓ ❓</div>
-<button onclick="spin()">回す！</button>
+
+<button onclick="startSpin()">スタート</button><br>
+<button onclick="stopReel(0)">左STOP</button>
+<button onclick="stopReel(1)">中STOP</button>
+<button onclick="stopReel(2)">右STOP</button>
+
 <div id="log"></div>
 
-<audio id="winSound" src="https://actions.google.com/sounds/v1/alarms/bugle_tune.ogg"></audio>
 <audio id="spinSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
+<audio id="reachSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+<audio id="winSound" src="https://actions.google.com/sounds/v1/alarms/bugle_tune.ogg"></audio>
 
 <script>
 const symbols = ["🍒","🔔","💎","7️⃣","🍉"];
+let reels = ["❓","❓","❓"];
+let intervals = [null, null, null];
+let stopped = [false, false, false];
 
 function randomSymbol() {
   return symbols[Math.floor(Math.random() * symbols.length)];
 }
 
-function spin() {
-  document.getElementById("spinSound").play();
-
-  let reels = ["❓","❓","❓"];
-  let display = document.getElementById("reels");
-
-  let count = 0;
-  let interval = setInterval(() => {
-    reels = [randomSymbol(), randomSymbol(), randomSymbol()];
-    display.innerText = reels.join(" ");
-    count++;
-
-    if (count > 15) {
-      clearInterval(interval);
-      result(reels);
-    }
-  }, 100);
+function updateDisplay() {
+  document.getElementById("reels").innerText = reels.join(" ");
 }
 
-function result(reels) {
+function startSpin() {
+  document.getElementById("spinSound").play();
+  stopped = [false, false, false];
+
+  for (let i = 0; i < 3; i++) {
+    intervals[i] = setInterval(() => {
+      reels[i] = randomSymbol();
+      updateDisplay();
+    }, 80 + i * 20);
+  }
+
+  document.getElementById("log").innerHTML = "回転中...";
+}
+
+function stopReel(index) {
+  if (stopped[index]) return;
+
+  clearInterval(intervals[index]);
+  stopped[index] = true;
+
+  // リーチ判定
+  if (stopped[0] && stopped[1] && !stopped[2]) {
+    if (reels[0] === reels[1]) {
+      reach演出();
+    }
+  }
+
+  // 全停止
+  if (stopped.every(v => v)) {
+    result();
+  }
+}
+
+function reach演出() {
+  document.getElementById("reachSound").play();
+  document.body.classList.add("flash");
+  document.getElementById("log").innerHTML = "🔥 リーチ！！激アツ！！ 🔥";
+
+  setTimeout(() => {
+    document.body.classList.remove("flash");
+  }, 1000);
+}
+
+function result() {
   let log = document.getElementById("log");
 
   if (reels[0] === reels[1] && reels[1] === reels[2]) {
-    // JACKPOT
-    document.body.classList.add("flash");
-    document.getElementById("winSound").play();
-    log.innerHTML = "🎉 JACKPOT!!! 脳汁ドバドバ!!! 🎉";
-
-    setTimeout(() => {
-      document.body.classList.remove("flash");
-    }, 2000);
-
-  } else if (reels[0] === reels[1] || reels[1] === reels[2]) {
-    log.innerHTML = "✨ 惜しい！もう一回！";
+    jackpot();
   } else {
     log.innerHTML = "😢 ハズレ...";
   }
 }
+
+function jackpot() {
+  document.getElementById("winSound").play();
+  let log = document.getElementById("log");
+
+  let count = 0;
+  let interval = setInterval(() => {
+    document.body.style.background = count % 2 === 0 ? "red" : "yellow";
+    count++;
+
+    if (count > 20) {
+      clearInterval(interval);
+      document.body.style.background = "black";
+    }
+  }, 100);
+
+  log.innerHTML = "🎉🎉🎉 JACKPOT!!! 脳汁MAX!!! 🎉🎉🎉";
+}
+
+updateDisplay();
 </script>
 
 </body>
